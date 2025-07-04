@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>コンビネーション計算器を実装してみた</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    label { display: block; margin: 0.5em 0 0.2em; }
+    input[type="number"] { width: 5em; }
+    .result { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>コンビネーション計算器を実装してみた</h1>
+  <form id="combinationForm">
+    <label for="n">n の値:</label>
+    <input type="number" id="n" name="n" min="0" required>
+
+    <label for="k">k の値:</label>
+    <input type="number" id="k" name="k" min="0" required>
+
+    <button type="submit">計算</button>
+  </form>
+  <div class="result" id="result"></div>
+
+  <script>
+    // nCk（組み合わせ）を計算する関数
+    function combination(n, k) {
+      if (k < 0 || k > n) return 0;
+      if (k === 0 || k === n) return 1;
+      let result = 1;
+      for (let i = 1; i <= k; i++) {
+        result = result * (n - i + 1) / i;
+      }
+      return result;
+    }
+
+    document.getElementById('combinationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const n = parseInt(document.getElementById('n').value, 10);
+      const k = parseInt(document.getElementById('k').value, 10);
+
+      if (isNaN(n) || isNaN(k)) {
+        document.getElementById('result').textContent = 'nとkの値を入力してください。';
+        return;
+      }
+
+      const value = combination(n, k);
+      document.getElementById('result').textContent = `組み合わせ（${n}C${k}）の値は: ${value} です。`;
+    });
+  </script>
+</body>
+</html>
