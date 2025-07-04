@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>JAXA 地表面温度平年差デモ</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        #result { margin-top: 1em; }
+        label { display: block; margin-top: 1em; }
+        canvas { border: 1px solid #ccc; margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <h1>JAXA 地表面温度平年差デモ</h1>
+    <form id="dateForm">
+        <label>
+            日付を選択:
+            <input type="date" id="date" value="2024-07-01" required>
+        </label>
+        <button type="submit">取得・表示</button>
+    </form>
+    <div id="result"></div>
+    <canvas id="mapCanvas" width="600" height="800"></canvas>
+    <script>
+        // 日本列島の緯度経度範囲
+        const JAPAN_BOUNDS = {
+            minLat: 24, maxLat: 46,
+            minLon: 123, maxLon: 146
+        };
+
+        // 疑似APIエンドポイント（実際のAPI仕様に合わせて修正してください）
+        // ここではデモ用にランダムデータを生成します
+        async function fetchLSTAnomaly(date) {
+            // 本来はAPIからデータ取得
+            // ここでは日本列島範囲の格子点ごとに乱数で疑似データ生成
+            const data = [];
+            for (let lat = JAPAN_BOUNDS.minLat; lat <= JAPAN_BOUNDS.maxLat; lat += 0.25) {
+                for (let lon = JAPAN_BOUNDS.minLon; lon <= JAPAN_BOUNDS.maxLon; lon += 0.25) {
+                    // 平年差（-3〜+3℃の乱数）
+                    data.push({
+                        lat, lon,
+                        anomaly: (Math.random() - 0.5) * 6
+                    });
+                }
+            }
+            return data;
+        }
+
+        // anomaly値を色に変換（青:低い, 白:0, 赤:高い）
+        function anomalyToColor(anomaly) {
+            // -3〜+3を0〜1に正規化
+            const norm = Math.max(0, Math.min(1, (anomaly + 3) / 6));
+            // 青→白→赤
+            const r = norm < 0.5 ? norm * 2 * 255 : 255;
+            const g = norm < 0.5 ? norm * 2 * 255 : (1 - (norm - 0.5) * 2) * 255;
+            const b = norm < 0.5 ? 255 : (1 - (norm - 0.5) * 2) * 255;
+            return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+        }
+
+        // 緯度経度→canvas座標変換
+        function latLonToCanvas(lat, lon, width, height) {
+            const x = (lon - JAPAN_BOUNDS.minLon) / (JAPAN_BOUNDS.maxLon - JAPAN_BOUNDS.minLon) * width;
+            const y = height - (lat - JAPAN_BOUNDS.minLat) / (JAPAN_BOUNDS.maxLat - JAPAN_BOUNDS.minLat) * height;
+            return {x, y};
+        }
+
+        document.getElementById('dateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const resultDiv = document.getElementById('result');
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            resultDiv.textContent = "データ取得中...";
+
+            // データ取得
+            const data = await fetchLSTAnomaly(date);
+
+            // 描画
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            data.forEach(pt => {
+                const {x, y} = latLonToCanvas(pt.lat, pt.lon, canvas.width, canvas.height);
+                ctx.fillStyle = anomalyToColor(pt.anomaly);
+                ctx.fillRect(x, y, 4, 4);
+            });
+
+            resultDiv.textContent = `${date} の地表面温度平年差（疑似データ）を表示しています。`;
+        });
+    </script>
+</body>
+</html>
